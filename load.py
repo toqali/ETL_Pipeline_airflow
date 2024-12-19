@@ -1,29 +1,37 @@
-import psycopg2
-from psycopg2.extras import execute_values
+from ETL.transform import transformation
+from airflow.providers.postgres.hooks.postgres import PostgresHook
 
-# Define the connect function
-def connect_postgresql(config):
-    try:
-        with psycopg2.connect(**config) as conn:
-            print("Connected to postgresql Server")
-            return conn
-    except (psycopg2.DatabaseError, Exception) as error:
-        print(error)
-        
-def load_data_to_postgresql(conn, df, table_name):
-    added_rows = f"""
-    INSERT INTO {table_name} ({', '.join(df.columns)})
-    VALUES %s
+
+# Insert Data into PostgreSQL
+def insert_data_from_df():
+    df = transformation()
+    pg_hook = PostgresHook(postgres_conn_id='postgres_load')
+    conn = pg_hook.get_conn()
+    cursor = conn.cursor()
+
+    insert_query = """
+        INSERT INTO student (
+            gender, age, city, profession, academic_pressure, work_pressure,
+            cgpa, study_satisfaction, job_satisfaction, sleep_duration, dietary_habits,
+            degree, suicidal_thoughts, work_study_hours, financial_stress,
+            family_history, depression
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
     """
-    rowsVal_as_tuple = list(df.itertuples(index = False, name = None))
-    try:
-        with conn.cursor() as cur:
-            execute_values(cur, added_rows, rowsVal_as_tuple)
-            conn.commit()
-            print(f"Successfully inserted {len(rowsVal_as_tuple)} records into {table_name}")
-    except Exception as e:
-        conn.rollback()
-        print(f"Error inserting data: {e}")
+
+    # Batch Insert for Efficiency
+    records = [
+        (
+            row['gender'], row['age'], row['city'], row['profession'], row['academic_pressure'],
+            row['work_pressure'], row['cgpa'], row['study_satisfaction'], row['job_satisfaction'],
+            row['sleep_duration'], row['dietary_habits'], row['degree'], row['suicidal_thoughts'],
+            row['work_study_hours'], row['financial_stress'], row['family_history'], row['depression']
+        )
+        for _, row in df.iterrows()
+    ]
+
+    cursor.executemany(insert_query, records)  # Efficient batch execution
+    conn.commit()
+    cursor.close()
+    conn.close()
     
-
-
+  

@@ -1,7 +1,5 @@
-import pandas as pd
 from pandas.api.types import is_object_dtype, is_numeric_dtype
-
-# you can add more steps related to format, dtypes, ... as needed
+from ETL.extract import read_file
 class DataTransform:
     def __init__(self, df):
         self.df = df
@@ -72,3 +70,15 @@ class DataTransform:
         Returns the cleaned DataFrame.
         """
         return self.df
+
+
+# Transformation Function
+def transformation():
+    df = read_file()  # Reads data
+    trans_data_obj = DataTransform(df)
+    trans_data_obj.handleDuplicated()
+    trans_data_obj.handleMissing()
+    trans_data_obj.reformatColsNames()
+    trans_data_obj.rmIrreltCol(["id"])
+    return trans_data_obj.getCleanedData()
+ 

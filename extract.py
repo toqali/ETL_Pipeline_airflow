@@ -1,17 +1,15 @@
 import kaggle
 import pandas as pd
 
-
-
 # get on data for once time using API from kaggle
 def download_dataset():
     # Authenticate using Kaggle API
     kaggle.api.authenticate()
     # Download the dataset by its URL from Kaggle
-    kaggle.api.dataset_download_files("hopesb/student-depression-dataset", unzip=True, path=".")
+    kaggle.api.dataset_download_files("hopesb/student-depression-dataset", unzip=True, path= "/home/toqa/airflow/ETL")
 
 # read collected data
-def read_file(path):
+def read_file(path = "/home/toqa/airflow/ETL/Student Depression Dataset.csv"):
     extension = path.split(".")[-1]
     # read excel file
     if extension in ["xls", "xlsx", "xlsm", "xlsb"]:
